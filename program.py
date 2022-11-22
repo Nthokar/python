@@ -1,15 +1,10 @@
 import csv
+
+import numpy as np
+from matplotlib import pyplot as plt
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.styles.borders import Border, Side
-import re
-
-from openpyxl.descriptors import (
-    String,
-    Sequence,
-    Integer,
-)
-from openpyxl.descriptors.serialisable import Serialisable
 
 currency_to_rub = {
     "AZN": 35.68,
@@ -51,6 +46,9 @@ def сsv_parser(file_name):
 
 filename, name = input("Введите название файла: "), input("Введите название профессии: ")
 
+if filename == "":
+    filename = "vacancies_by_year.csv"
+
 class Vacancy:
     def __init__(self, name, salary_from, salary_to, salary_currency, area_name, published_at):
         self.name = name
@@ -64,75 +62,28 @@ class Vacancy:
 class Report:
     font_size = 11
 
-    def generate_excel(self, statics_by_years, statics_by_cities):
-        wb = Workbook()
-        wb.remove(wb['Sheet'])
+    def generate_report(self, statics_by_years, statics_by_cities):
+        ig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4))
+        plt.xticks(fontsize=8)
+        years = np.arange(len(statics_by_years.keys()))
 
-        statistics_by_year_sheet = wb.create_sheet("Статистика по годам")
-        statistics_by_year_sheet.append(["Год", "Средняя зарплата", f"Средняя зарплата - {name}", "Количество вакансий", f"Количество вакансий - {name}"])
-        for key in statics_by_years:
-            statistics_by_year_sheet.append([key] + statics_by_years[key])
+        #bar1 = axes[0].boxplot([0, 1, 2])
+        #bar(years, [x[0] for x in statics_by_years.values()], width=0.4, label="средняя з/п")
+        #bar1[1].yaxis.grid(True, linestyle='-', which='major',
+        #              color='grey')
 
-        cols_dict = {}
-        for row in statistics_by_year_sheet.rows:
-            for cell in row:
-                letter = cell.column_letter
-                cell.border = Border(left=Side(style='thin'),
-                                     right=Side(style='thin'),
-                                     top=Side(style='thin'),
-                                     bottom=Side(style='thin'))
-                if cell.value:
-                    cell.font = Font(name='Calibri', size=self.font_size)
-                    len_cell = len(str(cell.value))
-                    len_cell_dict = 0
-                    if letter in cols_dict:
-                        len_cell_dict = cols_dict[letter]
+        #plt.xticks(years, statics_by_years.keys())
+        axes[0].bar(years, [x[0] for x in statics_by_years.values()], width=0.4, label="средняя з/п")
+        axes[0].bar([ x+0.4 for x in years], [x[1] for x in statics_by_years.values()], width=0.4, label="средняя з/п")
+        axes[0].set_xticks(years, statics_by_years.keys(), rotation=90, ha='right')
+        #axes[0].bar([x + 0.4 for x in years], [x[1] for x in statics_by_years.values()], width=0.4, label=f"з/п {name}")
 
-                    if len_cell > len_cell_dict:
-                        cols_dict[letter] = len_cell
-                        ###!!! ПРОБЛЕМА АВТОМАТИЧЕСКОЙ ПОДГОНКИ !!!###
-                        ###!!! расчет новой ширины колонки (здесь надо подгонять) !!!###
-                        new_width_col = len_cell * self.font_size ** (self.font_size * 0.009)
-                        statistics_by_year_sheet.column_dimensions[cell.column_letter].width = new_width_col
-
-        for cell in statistics_by_year_sheet[1:1]:
-            cell.font = Font(name='Calibri', size=self.font_size, bold=True)
-
-
-        statistics_by_cities_sheet = wb.create_sheet("Статистика по городам")
-        statistics_by_cities_sheet.append(['Город', 'Уровень зарплат', ' ', 'Город', 'Доля вакансий'])
-        for key in statics_by_cities:
-            statistics_by_cities_sheet.append([key, statics_by_cities[key][0], ' ', key, statics_by_cities[key][1]])
-
-        cols_dict = {}
-        for row in statistics_by_cities_sheet.rows:
-            for cell in row:
-                letter = cell.column_letter
-                cell.border = Border(left=Side(style='thin'),
-                                     right=Side(style='thin'),
-                                     top=Side(style='thin'),
-                                     bottom=Side(style='thin'))
-                if cell.value:
-                    cell.font = Font(name='Calibri', size=self.font_size)
-                    len_cell = len(str(cell.value))
-                    len_cell_dict = 0
-                    if letter in cols_dict:
-                        len_cell_dict = cols_dict[letter]
-
-                    if len_cell > len_cell_dict:
-                        cols_dict[letter] = len_cell
-                        ###!!! ПРОБЛЕМА АВТОМАТИЧЕСКОЙ ПОДГОНКИ !!!###
-                        ###!!! расчет новой ширины колонки (здесь надо подгонять) !!!###
-                        new_width_col = len_cell * self.font_size ** (self.font_size * 0.009)
-                        statistics_by_cities_sheet.column_dimensions[cell.column_letter].width = new_width_col
-
-
-        for cell in statistics_by_cities_sheet['E']:
-            cell.number_format = '0.00%'
-        for cell in statistics_by_cities_sheet[1:1]:
-            cell.font = Font(name='Calibri', size=self.font_size, bold=True)
-        wb.save('report.xlsx')
-
+        for ax in axes:
+            ax.yaxis.grid(True)
+            #ax.set_xticklabels(statics_by_years.keys())
+        axes[0].set_title("Уровень зарплаты по годам")
+        axes[0].legend(loc='upper left')
+        plt.show()
 
 
 
@@ -184,7 +135,7 @@ for key in vacancies_city.keys():
     vacancies_proportion_by_city.update({key: float(len(vacancies_city[key])/vacancies_count)})
     statistics_by_cities.update({key: [vacancies_salary_by_city[key], vacancies_proportion_by_city[key]]})
 
-Report().generate_excel(statistics_by_years, statistics_by_cities)
+Report().generate_report(statistics_by_years, statistics_by_cities)
 
 temp = '\''
 print(f"Динамика уровня зарплат по годам: {str(vacancies_salary_by_years).replace(temp, '')}")
@@ -194,8 +145,6 @@ print("Динамика количества вакансий по годам д
 vacancies_salary_by_city = {k: v for k, v in sorted(vacancies_salary_by_city.items(), key=lambda item: item[1], reverse=True)[0:10]}
 vacancies_proportion_by_city = {k: round(v, 4) for k, v in sorted(vacancies_proportion_by_city.items(), key=lambda item: item[1], reverse=True)[0:10]}
 
-#vacancies_salary_by_city = list(map(lambda k: (k, vacancies_salary_by_city[k]), vacancies_salary_by_city))
-#vacancies_salary_by_city.sort(key=lambda tup: tup[1], reverse=True)
 print("Уровень зарплат по городам (в порядке убывания): " + str(vacancies_salary_by_city))
 print(f"Доля вакансий по городам (в порядке убывания): {str(vacancies_proportion_by_city)}")
 
