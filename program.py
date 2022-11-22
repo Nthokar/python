@@ -2,9 +2,8 @@ import csv
 
 import numpy as np
 from matplotlib import pyplot as plt
-from openpyxl import Workbook
-from openpyxl.styles import Font
-from openpyxl.styles.borders import Border, Side
+from jinja2 import Environment, FileSystemLoader
+import pdfkit
 
 currency_to_rub = {
     "AZN": 35.68,
@@ -62,8 +61,8 @@ class Vacancy:
 class Report:
     font_size = 11
 
-    def generate_report(self, statics_by_years, statics_by_cities):
-        ig, axes = plt.subplots(nrows=2, ncols=2, figsize=(18, 12))
+    def generate_png(self, statics_by_years, statics_by_cities):
+        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(18, 12))
         plt.xticks(fontsize=8)
         years = np.arange(len(statics_by_years.keys()))
         cities = np.arange(len(statics_by_cities))
@@ -99,7 +98,15 @@ class Report:
                        labels=(list(statics_by_cities.keys()))[:10] + ['Другие'], colors=colors)
 
         plt.show()
+        fig.savefig('graph.png')
+        plt.close(fig)
 
+    def generate_report(self, statics_by_years, statics_by_cities):
+        env = Environment(loader=FileSystemLoader('.'))
+        template = env.get_template("pdf_template.html")
+
+        pdf_template = template.render({'items': statics_by_years})
+        pdfkit.from_string(pdf_template, 'out.pdf')
 
 
 
