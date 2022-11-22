@@ -63,26 +63,41 @@ class Report:
     font_size = 11
 
     def generate_report(self, statics_by_years, statics_by_cities):
-        ig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 4))
+        ig, axes = plt.subplots(nrows=2, ncols=2, figsize=(18, 12))
         plt.xticks(fontsize=8)
         years = np.arange(len(statics_by_years.keys()))
+        cities = np.arange(len(statics_by_cities))
 
-        #bar1 = axes[0].boxplot([0, 1, 2])
-        #bar(years, [x[0] for x in statics_by_years.values()], width=0.4, label="средняя з/п")
-        #bar1[1].yaxis.grid(True, linestyle='-', which='major',
-        #              color='grey')
+        colors = ['#FFAC1C', '#FF0000', '#800000', '#FFFF00', '#808000', '#00FF00', '#00FFFF', '#008080', '#0000FF', '#FF00FF', '#800080']
 
-        #plt.xticks(years, statics_by_years.keys())
-        axes[0].bar(years, [x[0] for x in statics_by_years.values()], width=0.4, label="средняя з/п")
-        axes[0].bar([ x+0.4 for x in years], [x[1] for x in statics_by_years.values()], width=0.4, label="средняя з/п")
-        axes[0].set_xticks(years, statics_by_years.keys(), rotation=90, ha='right')
-        #axes[0].bar([x + 0.4 for x in years], [x[1] for x in statics_by_years.values()], width=0.4, label=f"з/п {name}")
+        axes[0][0].bar(years, [x[0] for x in statics_by_years.values()], width=0.4, label="средняя з/п")
+        axes[0][0].bar([x + 0.4 for x in years], [x[1] for x in statics_by_years.values()], width=0.4, label="средняя з/п")
+        axes[0][0].set_xticks(years, statics_by_years.keys(), rotation=90, ha='right')
+        axes[0][0].yaxis.grid(True)
+        axes[0][0].set_title("Уровень зарплаты по годам")
+        axes[0][0].legend(loc='upper left')
 
-        for ax in axes:
-            ax.yaxis.grid(True)
-            #ax.set_xticklabels(statics_by_years.keys())
-        axes[0].set_title("Уровень зарплаты по годам")
-        axes[0].legend(loc='upper left')
+        axes[0][1].bar(years, [x[2] for x in statics_by_years.values()], width=0.4, label="Количество вакансий")
+        axes[0][1].bar([x + 0.4 for x in years], [x[3] for x in statics_by_years.values()], width=0.4, label=f"Количество вакансий{name}")
+        axes[0][1].set_xticks(years, statics_by_years.keys(), rotation=90, ha='right')
+        axes[0][1].yaxis.grid(True)
+        axes[0][1].set_title("Количество вакансий по годам")
+        axes[0][1].legend(loc='upper left')
+
+        statics_by_cities = dict(sorted(statics_by_cities.items(), key=lambda item: item[1][0], reverse=True))
+
+        axes[1][0].barh(cities, [x[0] for x in statics_by_cities.values()])
+        axes[1][0].set_yticks(cities)
+        axes[1][0].set_yticklabels(statics_by_cities.keys())
+        axes[1][0].invert_yaxis()  # labels read top-to-bottom
+        axes[1][0].xaxis.grid(True)
+        axes[1][0].set_title('Уровень зарплаты по годам')
+
+        statics_by_cities = dict(sorted(statics_by_cities.items(), key=lambda item: item[1][1], reverse=True))
+
+        axes[1][1].pie(list([x[1] for x in (list(statics_by_cities.values()))[:10]]) + list([sum([x[1] for x in (list(statics_by_cities.values()))[10:]])]),
+                       labels=(list(statics_by_cities.keys()))[:10] + ['Другие'], colors=colors)
+
         plt.show()
 
 
