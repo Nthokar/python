@@ -105,8 +105,9 @@ class Report:
         env = Environment(loader=FileSystemLoader('.'))
         template = env.get_template("pdf_template.html")
 
-        pdf_template = template.render({'items': statics_by_years})
-        pdfkit.from_string(pdf_template, 'out.pdf')
+        pdf_template = template.render({'items': statics_by_years, 'items2': statics_by_cities})
+        options = {'enable-local-file-access': None}
+        pdfkit.from_string(pdf_template, 'out.pdf', options=options)
 
 
 
@@ -155,7 +156,7 @@ for key in vacancies_city.keys():
     vacancies_salary_by_city.update({key: int(sum(map(lambda x: x.salary_average * currency_to_rub[x.salary_currency], vacancies_city[key])) / len(
         vacancies_city[key]))})
     vacancies_proportion_by_city.update({key: float(len(vacancies_city[key])/vacancies_count)})
-    statistics_by_cities.update({key: [vacancies_salary_by_city[key], vacancies_proportion_by_city[key]]})
+    statistics_by_cities.update({key: [vacancies_salary_by_city[key], round(vacancies_proportion_by_city[key] * 100, 2)]})
 
 Report().generate_report(statistics_by_years, statistics_by_cities)
 
